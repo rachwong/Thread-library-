@@ -11,14 +11,13 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <unistd.h>
-
 #include "littleThread.h"
 #include "threads1.c" // rename this for different threads
 Thread threads[50]; //my global variable, thread array 
 Thread mythreads[50];//a copy of the list which I will link
 Thread newThread; // the thread currently being set up
 Thread mainThread; // the main thread
-Thread currentThread;
+Thread currentThread; // this keeps track of the thread that is currently running in the array 
 struct sigaction setUpAction;
 
 
@@ -57,9 +56,6 @@ void switcher(Thread prevThread, Thread nextThread) {
 		currentThread->next->prev = currentThread->prev;
 		currentThread->prev->next = currentThread->next;
 		currentThread = nextThread;
-		/*if(prevThread->tid != NUMTHREADS-1){
-		nextThread->state = RUNNING;
-		}*/
 		free(prevThread->stackAddr); // Wow! //clearing the stack memory 
 		longjmp(nextThread->environment, 1); //Longjmp jumps to setjmp where we called it last. Will make setjmp call value 1
 	} else if (setjmp(prevThread->environment) == 0) { // so we can come back here Setjmp is saving the current state of the thread. 
@@ -80,23 +76,17 @@ void switcher(Thread prevThread, Thread nextThread) {
 //then if last thread we just run switcher back with localthread and mainthread 
 void scheduler() {
 	if (NUMTHREADS == 1){
-		//puts("first if reached");
 		switcher(currentThread, mainThread);
 	}
 	else if (currentThread == currentThread->next){
-		//puts("second if reached");
 		switcher(currentThread, mainThread);
 	}
 	else {
-		//puts("third if reached");
 		switcher(currentThread, currentThread->next);
 	}
 	
 }
 
-void threadYield(){
-	scheduler();
-}
 /*
  * Associates the signal stack with the newThread.
  * Also sets up the newThread to start running after it is long jumped to.
@@ -110,10 +100,6 @@ void associateStack(int signum) {
 		printThreadStates();
 		(localThread->start)();
 		localThread->state = FINISHED;
-		//currentThread->next->prev = currentThread->prev;
-		//currentThread->prev->next = currentThread->next;
-		
-		//printThreadStates();
 		scheduler();
 		//switcher(localThread, mainThread); // at the moment back to the main thread
 	}

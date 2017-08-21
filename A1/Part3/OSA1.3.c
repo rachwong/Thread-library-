@@ -3,7 +3,7 @@
  Name        : OSA1.c
  Author      : Rachel Wong rwon253 
  Version     : 1.1
- Description : multiple thread no pre-emption implementation.
+ Description : multiple thread with a timer
  ============================================================================
  */
 
@@ -12,7 +12,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <string.h>
-#include <sys/time.h>
+#include <sys/time.h>//adding two more libraries for the timer
 #include "littleThread.h"
 #include "threads3.c" // rename this for different threads
 Thread threads[50]; //my global variable, thread array 
@@ -60,9 +60,6 @@ void switcher(Thread prevThread, Thread nextThread) {
 		currentThread->next->prev = currentThread->prev;
 		currentThread->prev->next = currentThread->next;
 		currentThread = nextThread;
-		/*if(prevThread->tid != NUMTHREADS-1){
-		nextThread->state = RUNNING;
-		}*/
 		free(prevThread->stackAddr); // Wow! //clearing the stack memory 
 		longjmp(nextThread->environment, 1); //Longjmp jumps to setjmp where we called it last. Will make setjmp call value 1
 	} else if (setjmp(prevThread->environment) == 0) { // so we can come back here Setjmp is saving the current state of the thread. 
@@ -83,15 +80,12 @@ void switcher(Thread prevThread, Thread nextThread) {
 //then if last thread we just run switcher back with localthread and mainthread 
 void scheduler() {
 	if (NUMTHREADS == 1){
-		//puts("first if reached");
 		switcher(currentThread, mainThread);
 	}
 	else if (currentThread == currentThread->next){
-		//puts("second if reached");
 		switcher(currentThread, mainThread);
 	}
 	else {
-		//puts("third if reached");
 		switcher(currentThread, currentThread->next);
 	}
 	
@@ -101,7 +95,7 @@ void threadYield(){
 	//printThreadStates();
 	scheduler();
 }
-
+//timer handler 
 void timer_handler(){
 	scheduler();
 }
@@ -133,13 +127,8 @@ void associateStack(int signum) {
 	Thread localThread = newThread; // what if we don't use this local variable?
 	localThread->state = READY; // now it has its stack
 	if (setjmp(localThread->environment) != 0) { // will be zero if called directly
-		//printThreadStates();
 		(localThread->start)();
 		localThread->state = FINISHED;
-		//currentThread->next->prev = currentThread->prev;
-		//currentThread->prev->next = currentThread->next;
-		
-		//printThreadStates();
 		scheduler();
 		//switcher(localThread, mainThread); // at the moment back to the main thread
 	}

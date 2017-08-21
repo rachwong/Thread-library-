@@ -3,7 +3,7 @@
  Name        : OSA1.c
  Author      : Rachel Wong rwon253 
  Version     : 1.1
- Description : multiple thread no pre-emption implementation.
+ Description : multiple threads no pre-emption implementation not runnning all at once 
  ============================================================================
  */
 
@@ -55,12 +55,9 @@ void switcher(Thread prevThread, Thread nextThread) {
 		printf("\ndisposing %d\n", prevThread->tid);
 		nextThread->state = RUNNING;
 		printThreadStates();
-		currentThread->next->prev = currentThread->prev;
+		currentThread->next->prev = currentThread->prev;//removing from the list and resetting pointers 
 		currentThread->prev->next = currentThread->next;
 		currentThread = nextThread;
-		/*if(prevThread->tid != NUMTHREADS-1){
-		nextThread->state = RUNNING;
-		}*/
 		free(prevThread->stackAddr); // Wow! //clearing the stack memory 
 		longjmp(nextThread->environment, 1); //Longjmp jumps to setjmp where we called it last. Will make setjmp call value 1
 	} else if (setjmp(prevThread->environment) == 0) { // so we can come back here Setjmp is saving the current state of the thread. 
@@ -81,20 +78,17 @@ void switcher(Thread prevThread, Thread nextThread) {
 //then if last thread we just run switcher back with localthread and mainthread 
 void scheduler() {
 	if (NUMTHREADS == 1){
-		//puts("first if reached");
 		switcher(currentThread, mainThread);
 	}
 	else if (currentThread == currentThread->next){
-		//puts("second if reached");
 		switcher(currentThread, mainThread);
 	}
 	else {
-		//puts("third if reached");
 		switcher(currentThread, currentThread->next);
 	}
 	
 }
-
+//threadyield calls the scheduler which stops the thread running and goes onto the next thread 
 void threadYield(){
 	//printThreadStates();
 	scheduler();
@@ -178,10 +172,11 @@ int main(void) {
 	// create the threads
 	for (int t = 0; t < NUMTHREADS; t++) {
 		threads[t] = createThread(threadFuncs[t]);
-		mythreads[t] = threads[t];
+		mythreads[t] = threads[t];//this is my linked list which is a pointer to the original
 		
 	}
 	currentThread = mythreads[0];
+	//Creating my circular linked list 
 	for (int t = 0; t < NUMTHREADS; t++) {
 		if(NUMTHREADS == 1){
 		mythreads[t]->prev = mythreads[t];
