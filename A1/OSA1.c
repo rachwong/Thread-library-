@@ -30,6 +30,7 @@ void switcher(Thread prevThread, Thread nextThread) {
 	} else if (setjmp(prevThread->environment) == 0) { // so we can come back here
 		prevThread->state = READY;
 		nextThread->state = RUNNING;
+		nextThread->state = RUNNING;
 		printf("scheduling %d\n", nextThread->tid);
 		longjmp(nextThread->environment, 1);
 	}
@@ -105,6 +106,8 @@ int main(void) {
 	for (int t = 0; t < NUMTHREADS; t++) {
 		threads[t] = createThread(threadFuncs[t]);
 	}
+	puts("Rachel Wong rwon253 ");
+	//printf("%d\n", NUMTHREADS);
 	puts("switching to first thread");
 	switcher(mainThread, threads[0]);
 	puts("back to the main thread");
